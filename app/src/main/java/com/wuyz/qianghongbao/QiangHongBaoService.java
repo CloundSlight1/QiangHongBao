@@ -30,14 +30,17 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
 //        AudioAttributes.Builder builder = new AudioAttributes.Builder();
 //        builder.setUsage(AudioAttributes.USAGE_NOTIFICATION);
 //        mAudioAttributes = builder.build();
+        mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        mTts = new TextToSpeech(getApplicationContext(), this);
     }
 
     @Override
     protected void onServiceConnected() {
         Log2.d(TAG, "onServiceConnected");
-        mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        mTts = new TextToSpeech(getApplicationContext(), this);
+        setService();
+    }
 
+    private void setService() {
         AccessibilityServiceInfo info = new AccessibilityServiceInfo();
         info.packageNames = new String[] {
                 "com.tencent.mm", "com.tencent.mobileqq", getPackageName()
@@ -45,7 +48,8 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
         info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
 //        info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
-//        info.notificationTimeout = 500;
+        info.notificationTimeout = 100;
+        info.flags = AccessibilityServiceInfo.DEFAULT;
         setServiceInfo(info);
     }
 
@@ -90,7 +94,7 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
 //                    if (content.contains("红包")) {
 //                        mVibrator.vibrate(new long[] {1000, 500}, 4, mAudioAttributes);
 //                    }
-                    if (content.contains("红包") || content.contains("title")) {
+                    if (content.contains("红包") || content.contains("qianghongbao")) {
                         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
                         if (!(powerManager.isScreenOn())) {
                             PowerManager.WakeLock wl = powerManager.newWakeLock(
