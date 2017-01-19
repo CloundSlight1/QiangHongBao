@@ -82,7 +82,7 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
 
         Log2.d(TAG, "onAccessibilityEvent, type: %X, package: %s, class: %s, texts: %s",
                 event.getEventType(), event.getPackageName(), className, texts);
-        if ("android.app.Notification".equals(className)) {
+        if (Notification.class.getName().equals(className)) {
             if (texts != null && texts.size() > 0) {
                 for (CharSequence s : texts) {
                     String content = s.toString();
@@ -101,7 +101,7 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
 
                         mVibrator.vibrate(new long[] {500, 1000, 500, 1000, 500, 1000}, -1);
                         if (mTtsInited) {
-                            mTts.speak("red bag is coming", TextToSpeech.QUEUE_ADD, null);
+                            mTts.speak("red bag", TextToSpeech.QUEUE_ADD, null);
 //                            mTts.speak("red bag is coming", TextToSpeech.QUEUE_ADD, null);
 //                            mTts.speak("red bag is coming", TextToSpeech.QUEUE_ADD, null);
                         }
