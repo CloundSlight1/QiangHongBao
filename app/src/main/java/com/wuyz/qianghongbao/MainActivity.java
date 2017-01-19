@@ -7,11 +7,13 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -22,10 +24,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        findViewById(R.id.setting).setOnClickListener(this);
+        findViewById(R.id.set_accessibility_button).setOnClickListener(this);
+        findViewById(R.id.set_notification_button).setOnClickListener(this);
         findViewById(R.id.notify_button).setOnClickListener(this);
 
-//        boolean ret = bindService(new Intent(this, QiangHongBaoService.class), new ServiceConnection() {
+//        boolean ret = bindService(new Intent(this, MyAccessibilityService.class), new ServiceConnection() {
 //            @Override
 //            public void onServiceConnected(ComponentName name, IBinder service) {
 //                Log2.d(TAG, "onServiceConnected");
@@ -42,8 +45,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.setting:
+            case R.id.set_accessibility_button:
                 startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                break;
+            case R.id.set_notification_button:
+                startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
                 break;
             case R.id.notify_button:
                 sendNotification();
@@ -80,6 +86,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log2.d(TAG, "services: %s %s", resolveInfo.serviceInfo.name, resolveInfo.serviceInfo.permission);
             }
         }
+    }
 
+    private void doCheck() {
+        if (!MyAccessibilityService.isEnable(this)) {
+            Toast.makeText(this, "请开启抢红包", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            if (!MyNotificationService.isEnable(this)) {
+                Toast.makeText(this, "请开启抢红包", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                return;
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        doCheck();
     }
 }

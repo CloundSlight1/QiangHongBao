@@ -4,22 +4,25 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.os.PowerManager;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
+import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.List;
 import java.util.Locale;
 
 
-public class QiangHongBaoService extends AccessibilityService implements TextToSpeech.OnInitListener {
+public class MyAccessibilityService extends AccessibilityService implements TextToSpeech.OnInitListener {
 
-    private static final String TAG = "QiangHongBaoService";
+    private static final String TAG = "MyAccessibilityService";
 
-    private Vibrator mVibrator;
+    private Vibrator vibrator;
     private AudioAttributes mAudioAttributes;
     private TextToSpeech mTts;
     private Boolean mTtsInited = false;
@@ -30,7 +33,7 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
 //        AudioAttributes.Builder builder = new AudioAttributes.Builder();
 //        builder.setUsage(AudioAttributes.USAGE_NOTIFICATION);
 //        mAudioAttributes = builder.build();
-        mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         mTts = new TextToSpeech(getApplicationContext(), this);
     }
 
@@ -42,9 +45,7 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
 
     private void setService() {
         AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-        info.packageNames = new String[] {
-                "com.tencent.mm", "com.tencent.mobileqq", getPackageName()
-        };
+        info.packageNames = Constants.TRACK_PACKAGES;
         info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
 //        info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
@@ -92,7 +93,7 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
                     String content = s.toString();
                     Log2.d(TAG, "onAccessibilityEvent, text: %s", content);
 //                    if (content.contains("红包")) {
-//                        mVibrator.vibrate(new long[] {1000, 500}, 4, mAudioAttributes);
+//                        vibrator.vibrate(new long[] {1000, 500}, 4, mAudioAttributes);
 //                    }
                     if (content.contains("红包") || content.contains("qianghongbao")) {
                         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -103,7 +104,7 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
                             wl.release();
                         }
 
-                        mVibrator.vibrate(new long[] {500, 1000, 500, 1000, 500, 1000}, -1);
+                        vibrator.vibrate(new long[] {500, 1000, 500, 1000}, -1);
                         if (mTtsInited) {
                             mTts.speak("red bag", TextToSpeech.QUEUE_ADD, null);
 //                            mTts.speak("red bag is coming", TextToSpeech.QUEUE_ADD, null);
@@ -142,5 +143,25 @@ public class QiangHongBaoService extends AccessibilityService implements TextToS
             mTts.shutdown();
             mTts = null;
         }
+    }
+
+    public static boolean isEnable(Context context) {
+        String enable = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED);
+        Log2.d(TAG, "ACCESSIBILITY_ENABLED %s", enable);
+        if (!"1".equalsIgnoreCase(enable))
+            return false;
+
+        String services = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+//        Log2.d(TAG, "enabled_accessibility_services %s", services);
+        if (!TextUtils.isEmpty(services)) {
+            String[] arr = services.split(":");
+            String myPackage = context.getPackageName();
+            for (String name : arr) {
+                ComponentName componentName = ComponentName.unflattenFromString(name);
+                if (componentName != null && myPackage.equals(componentName.getPackageName()))
+                    return true;
+            }
+        }
+        return false;
     }
 }
