@@ -10,18 +10,20 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.wuyz.qianghongbao.MainActivity">
 
-    <Button android:id="@+id/set_accessibility_button"
+    <ToggleButton android:id="@+id/set_accessibility_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:scaleType="fitCenter"
-        android:text="accessibility" />
-    <Button android:id="@+id/set_notification_button"
+        android:textOn="Accessibility On"
+        android:textOff="Accessibility Off"/>
+    <ToggleButton android:id="@+id/set_notification_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:scaleType="fitCenter"
-        android:text="notification"
+        android:textOn="Notification On"
+        android:textOff="Notification Off"
         android:layout_below="@id/set_accessibility_button"/>
     <Button
         android:id="@+id/notify_button"

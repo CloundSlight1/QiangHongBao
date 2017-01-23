@@ -3,38 +3,21 @@ package com.wuyz.qianghongbao;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
-import android.media.AudioAttributes;
-import android.os.PowerManager;
-import android.os.Vibrator;
 import android.provider.Settings;
-import android.speech.tts.TextToSpeech;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.List;
-import java.util.Locale;
 
 
-public class MyAccessibilityService extends AccessibilityService implements TextToSpeech.OnInitListener {
-
+public class MyAccessibilityService extends AccessibilityService {
     private static final String TAG = "MyAccessibilityService";
-
-    private Vibrator vibrator;
-    private AudioAttributes mAudioAttributes;
-    private TextToSpeech mTts;
-    private Boolean mTtsInited = false;
 
     @Override
     public void onCreate() {
         Log2.d(TAG, "onCreate");
-//        AudioAttributes.Builder builder = new AudioAttributes.Builder();
-//        builder.setUsage(AudioAttributes.USAGE_NOTIFICATION);
-//        mAudioAttributes = builder.build();
-        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        mTts = new TextToSpeech(getApplicationContext(), this);
     }
 
     @Override
@@ -82,46 +65,34 @@ public class MyAccessibilityService extends AccessibilityService implements Text
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        process(event);
+    }
+
+    private boolean process(AccessibilityEvent event) {
+        if (event == null)
+            return false;
         CharSequence className = event.getClassName();
+        if (!Notification.class.getName().equals(className))
+            return false;
+
         List<CharSequence> texts = event.getText();
+        if (texts == null || texts.isEmpty())
+            return false;
 
-        Log2.d(TAG, "onAccessibilityEvent, type: %X, package: %s, class: %s, texts: %s",
-                event.getEventType(), event.getPackageName(), className, texts);
-        if (Notification.class.getName().equals(className)) {
-            if (texts != null && texts.size() > 0) {
-                for (CharSequence s : texts) {
-                    String content = s.toString();
-                    Log2.d(TAG, "onAccessibilityEvent, text: %s", content);
-//                    if (content.contains("红包")) {
-//                        vibrator.vibrate(new long[] {1000, 500}, 4, mAudioAttributes);
-//                    }
-                    if (content.contains("红包") || content.contains("qianghongbao")) {
-                        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                        if (!(powerManager.isScreenOn())) {
-                            PowerManager.WakeLock wl = powerManager.newWakeLock(
-                                    PowerManager.ACQUIRE_CAUSES_WAKEUP|PowerManager.SCREEN_DIM_WAKE_LOCK, "hongbao");
-                            wl.acquire();
-                            wl.release();
-                        }
-
-                        vibrator.vibrate(new long[] {500, 1000, 500, 1000}, -1);
-                        if (mTtsInited) {
-                            mTts.speak("red bag", TextToSpeech.QUEUE_ADD, null);
-//                            mTts.speak("red bag is coming", TextToSpeech.QUEUE_ADD, null);
-//                            mTts.speak("red bag is coming", TextToSpeech.QUEUE_ADD, null);
-                        }
-                        Notification notification = (Notification) event.getParcelableData();
-                        if (notification != null) {
-                            try {
-                                notification.contentIntent.send();
-                            } catch (PendingIntent.CanceledException e) {
-                                Log2.e(TAG, e);
-                            }
-                        }
-                    }
-                }
-            }
+//        Log2.d(TAG, "onAccessibilityEvent, type: %X, package: %s, class: %s, texts: %s",
+//                event.getEventType(), event.getPackageName(), className, texts);
+        for (CharSequence s : texts) {
+            String text = s.toString();
+            if (!NotifyManager.getInstance().checkNotification(text))
+                continue;
+            Log2.d(TAG, "process, type: %X, text: %s", event.getEventType(), text);
+            Notification notification = (Notification) event.getParcelableData();
+            if (notification == null)
+                continue;
+            NotifyManager.getInstance().doNotify(this, notification);
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -130,24 +101,12 @@ public class MyAccessibilityService extends AccessibilityService implements Text
     }
 
     @Override
-    public void onInit(int status) {
-        if (status == TextToSpeech.SUCCESS) {
-            mTts.setLanguage(Locale.US);
-            mTtsInited = true;
-        }
-    }
-
-    @Override
     public void onDestroy() {
-        if (mTtsInited) {
-            mTts.shutdown();
-            mTts = null;
-        }
     }
 
     public static boolean isEnable(Context context) {
         String enable = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED);
-        Log2.d(TAG, "ACCESSIBILITY_ENABLED %s", enable);
+//        Log2.d(TAG, "ACCESSIBILITY_ENABLED %s", enable);
         if (!"1".equalsIgnoreCase(enable))
             return false;
 
