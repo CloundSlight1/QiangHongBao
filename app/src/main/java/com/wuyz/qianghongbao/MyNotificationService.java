@@ -62,14 +62,14 @@ public class MyNotificationService extends NotificationListenerService {
             return false;
 
         String pkg = sbn.getPackageName();
-        if (Utils.hasKey(pkg, Constants.TRACK_PACKAGES))
+        if (!Utils.hasKey(pkg, Constants.TRACK_PACKAGES))
             return false;
 
         Notification notification = sbn.getNotification();
         if (notification == null || TextUtils.isEmpty(notification.tickerText))
             return false;
         String text = notification.tickerText.toString();
-        if (NotifyManager.getInstance().checkNotification(text))
+        if (!NotifyManager.getInstance().checkNotification(text))
             return false;
         NotifyManager.getInstance().doNotify(this, notification);
         return true;
