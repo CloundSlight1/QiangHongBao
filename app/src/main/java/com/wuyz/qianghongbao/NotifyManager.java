@@ -85,7 +85,7 @@ public class NotifyManager {
             vibrator.vibrate(new long[]{500, 1000, 500, 1000}, -1);
         if (soundPoolInit && soundPool != null) {
             AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-            float volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            float volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) / 2f;
             soundPool.play(soundId,
                     volume,
                     volume,
